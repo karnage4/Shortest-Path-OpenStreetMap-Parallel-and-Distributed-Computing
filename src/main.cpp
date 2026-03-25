@@ -29,7 +29,9 @@ int main(int argc, char* argv[]) {
     // ------------------------------------------------------------------
     // Correctness Validation (Milestone 1 requirement)
     // ------------------------------------------------------------------
-    Validator::run(g);
+    #ifndef BENCHMARK_MODE
+        Validator::run(g);
+    #endif
 
     // ------------------------------------------------------------------
     // 2. Single-query shortest path (if OSM IDs provided)
@@ -66,7 +68,11 @@ int main(int argc, char* argv[]) {
     // ------------------------------------------------------------------
     // 3. Benchmark: N random queries (no target → full SSSP)
     // ------------------------------------------------------------------
-    constexpr int BENCH_QUERIES = 10;
+    #ifdef BENCHMARK_MODE
+        constexpr int BENCH_QUERIES = 100;  // more queries = stable average
+    #else
+        constexpr int BENCH_QUERIES = 10;
+    #endif
     std::mt19937 rng(42);
     std::uniform_int_distribution<uint32_t> dist_node(0, g.num_nodes() - 1);
 
