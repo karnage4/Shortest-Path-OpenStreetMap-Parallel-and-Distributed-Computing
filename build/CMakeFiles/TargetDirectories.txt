@@ -1,0 +1,4 @@
+D:/downloads/Semester 6/Parallel and Distributed Computing/Project/osm-routing/build/CMakeFiles/osm_routing.dir
+D:/downloads/Semester 6/Parallel and Distributed Computing/Project/osm-routing/build/CMakeFiles/osm_bench.dir
+D:/downloads/Semester 6/Parallel and Distributed Computing/Project/osm-routing/build/CMakeFiles/ALL_BUILD.dir
+D:/downloads/Semester 6/Parallel and Distributed Computing/Project/osm-routing/build/CMakeFiles/ZERO_CHECK.dir

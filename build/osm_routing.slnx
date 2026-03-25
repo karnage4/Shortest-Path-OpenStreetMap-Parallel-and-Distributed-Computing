@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Solution>
+	<Configurations>
+		<BuildType Name="Debug"/>
+		<BuildType Name="Release"/>
+		<BuildType Name="MinSizeRel"/>
+		<BuildType Name="RelWithDebInfo"/>
+		<Platform Name="x64"/>
+	</Configurations>
+	<Project Path="ALL_BUILD.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="208e8fe7-7b44-332f-aec1-c41cad45f2f0" DefaultStartup="true">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+		<BuildDependency Project="osm_bench.vcxproj"/>
+		<BuildDependency Project="osm_routing.vcxproj"/>
+		<Build Solution="Debug|*" Project="false"/>
+		<Build Solution="Release|*" Project="false"/>
+		<Build Solution="MinSizeRel|*" Project="false"/>
+		<Build Solution="RelWithDebInfo|*" Project="false"/>
+	</Project>
+	<Project Path="ZERO_CHECK.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="c42bd734-76ea-34b8-9d51-618530170cb5"/>
+	<Project Path="osm_bench.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="304eb603-2e75-37ac-89df-d46575e45304">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+	<Project Path="osm_routing.vcxproj" Type="8bc9ceb8-8b4a-11d0-8d11-00a0c91bc942" Id="83dbf169-b628-365c-91e1-484a0f20669e">
+		<BuildDependency Project="ZERO_CHECK.vcxproj"/>
+	</Project>
+</Solution>

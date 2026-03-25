@@ -1,0 +1,10 @@
+^D:\DOWNLOADS\SEMESTER 6\PARALLEL AND DISTRIBUTED COMPUTING\PROJECT\OSM-ROUTING\CMAKELISTS.TXT
+setlocal
+D:\cmake\bin\cmake.exe "-SD:/downloads/Semester 6/Parallel and Distributed Computing/Project/osm-routing" "-BD:/downloads/Semester 6/Parallel and Distributed Computing/Project/osm-routing/build" --check-stamp-file "D:/downloads/Semester 6/Parallel and Distributed Computing/Project/osm-routing/build/CMakeFiles/generate.stamp"
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd
