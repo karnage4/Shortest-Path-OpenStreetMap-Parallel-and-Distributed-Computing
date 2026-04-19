@@ -1,5 +1,0 @@
-/home/rayyanrk7/osm-routing-m2/build/CMakeFiles/osm_routing.dir
-/home/rayyanrk7/osm-routing-m2/build/CMakeFiles/osm_bench.dir
-/home/rayyanrk7/osm-routing-m2/build/CMakeFiles/osm_parallel.dir
-/home/rayyanrk7/osm-routing-m2/build/CMakeFiles/edit_cache.dir
-/home/rayyanrk7/osm-routing-m2/build/CMakeFiles/rebuild_cache.dir

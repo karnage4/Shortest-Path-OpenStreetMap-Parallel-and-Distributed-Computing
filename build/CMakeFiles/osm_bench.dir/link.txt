@@ -1,1 +1,0 @@
-/usr/bin/c++ -O3 -march=native -DNDEBUG CMakeFiles/osm_bench.dir/src/main.cpp.o CMakeFiles/osm_bench.dir/src/osm_parser.cpp.o CMakeFiles/osm_bench.dir/src/dijkstra.cpp.o CMakeFiles/osm_bench.dir/src/graph.cpp.o -o osm_bench  /usr/lib/x86_64-linux-gnu/libpugixml.so.1.14 
