@@ -9,6 +9,7 @@
 struct DijkstraResult {
     std::vector<uint32_t> dist;  // dist[v] = shortest distance from source
     std::vector<uint32_t> prev;  // prev[v] = predecessor on shortest path
+    double wall_ms = 0.0;
 };
 
 // ---------------------------------------------------------------------------
