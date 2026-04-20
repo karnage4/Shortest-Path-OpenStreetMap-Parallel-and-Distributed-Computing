@@ -5,30 +5,32 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_set>
-#include <cstring>  // strcmp
+#include <cstring> // strcmp
 
 // ---------------------------------------------------------------------------
 // Haversine formula. Returns distance in millimetres (uint32_t).
 // Max OSM edge ~200 km → 200,000,000 mm — well within uint32_t (4,294,967,295).
 // ---------------------------------------------------------------------------
 uint32_t OsmParser::haversine_mm(double lat1, double lon1,
-                                  double lat2, double lon2) {
-    constexpr double R  = 6371000.0; // Earth radius in metres
+                                 double lat2, double lon2)
+{
+    constexpr double R = 6371000.0; // Earth radius in metres
     constexpr double PI = 3.14159265358979323846;
-    auto to_rad = [PI](double d) { return d * PI / 180.0; };
+    auto to_rad = [PI](double d)
+    { return d * PI / 180.0; };
 
     double dlat = to_rad(lat2 - lat1);
     double dlon = to_rad(lon2 - lon1);
-    double a = std::sin(dlat/2) * std::sin(dlat/2)
-             + std::cos(to_rad(lat1)) * std::cos(to_rad(lat2))
-             * std::sin(dlon/2) * std::sin(dlon/2);
+    double a = std::sin(dlat / 2) * std::sin(dlat / 2) + std::cos(to_rad(lat1)) * std::cos(to_rad(lat2)) * std::sin(dlon / 2) * std::sin(dlon / 2);
     double c = 2.0 * std::atan2(std::sqrt(a), std::sqrt(1.0 - a));
     return static_cast<uint32_t>(R * c * 1000.0); // metres → mm
 }
 
-uint32_t highway_speed(const std::string& tag) {
-    for (auto& rt : ROAD_TYPES)
-        if (tag == rt.tag) return rt.speed_kmh;
+uint32_t highway_speed(const std::string &tag)
+{
+    for (auto &rt : ROAD_TYPES)
+        if (tag == rt.tag)
+            return rt.speed_kmh;
     return 0; // not a routable road
 }
 
@@ -120,14 +122,19 @@ uint32_t highway_speed(const std::string& tag) {
 
 // Fast attribute extraction from a raw XML start-tag string.
 // Returns true and writes value into `out` if attribute `name` is found.
-static bool get_attr(const char* line, const char* name, char* out, size_t out_sz) {
-    const char* p = std::strstr(line, name);
-    if (!p) return false;
+static bool get_attr(const char *line, const char *name, char *out, size_t out_sz)
+{
+    const char *p = std::strstr(line, name);
+    if (!p)
+        return false;
     p += std::strlen(name);
-    while (*p == ' ' || *p == '\t') ++p;
-    if (*p != '=') return false;
+    while (*p == ' ' || *p == '\t')
+        ++p;
+    if (*p != '=')
+        return false;
     ++p;
-    if (*p != '"' && *p != '\'') return false;
+    if (*p != '"' && *p != '\'')
+        return false;
     char delim = *p++;
     size_t i = 0;
     while (*p && *p != delim && i + 1 < out_sz)
@@ -136,21 +143,23 @@ static bool get_attr(const char* line, const char* name, char* out, size_t out_s
     return i > 0 || *p == delim;
 }
 
-void OsmParser::parse(const std::string& filepath, Graph& graph,
-                      const std::string& weight_mode) {
+void OsmParser::parse(const std::string &filepath, Graph &graph,
+                      const std::string &weight_mode)
+{
 
     // ------------------------------------------------------------------
     // Pass 1: Collect routable ways + referenced node IDs
     // ------------------------------------------------------------------
-    struct WayInfo {
+    struct WayInfo
+    {
         std::vector<int64_t> node_ids;
-        bool     one_way   = false;
+        bool one_way = false;
         uint32_t speed_kmh = 0;
     };
     std::vector<WayInfo> ways;
 
     {
-        FILE* f = std::fopen(filepath.c_str(), "rb");
+        FILE *f = std::fopen(filepath.c_str(), "rb");
         if (!f)
             throw std::runtime_error("Cannot open file: " + filepath);
 
@@ -163,29 +172,38 @@ void OsmParser::parse(const std::string& filepath, Graph& graph,
         leftover.reserve(1024);
 
         WayInfo cur_way;
-        bool in_way      = false;
-        bool way_routable= false;
-        bool seen_way    = false; // once we see the first <way>, nodes are done
+        bool in_way = false;
+        bool way_routable = false;
+        bool seen_way = false; // once we see the first <way>, nodes are done
 
-        auto process_line = [&](const char* line) {
+        auto process_line = [&](const char *line)
+        {
             // Skip whitespace
-            while (*line == ' ' || *line == '\t') ++line;
+            while (*line == ' ' || *line == '\t')
+                ++line;
 
-            if (!seen_way) {
+            if (!seen_way)
+            {
                 // We only care about <way> elements (nodes come before ways in OSM)
-                if (line[0] != '<') return;
-                if (std::strncmp(line, "<way", 4) == 0) {
+                if (line[0] != '<')
+                    return;
+                if (std::strncmp(line, "<way", 4) == 0)
+                {
                     seen_way = true;
                     in_way = true;
                     way_routable = false;
                     cur_way = WayInfo{};
-                } else {
+                }
+                else
+                {
                     return; // still in node section
                 }
             }
 
-            if (!in_way) {
-                if (std::strncmp(line, "<way", 4) == 0) {
+            if (!in_way)
+            {
+                if (std::strncmp(line, "<way", 4) == 0)
+                {
                     in_way = true;
                     way_routable = false;
                     cur_way = WayInfo{};
@@ -196,29 +214,41 @@ void OsmParser::parse(const std::string& filepath, Graph& graph,
             // Inside a <way> element
             char val[256];
 
-            if (std::strncmp(line, "<nd", 3) == 0) {
+            if (std::strncmp(line, "<nd", 3) == 0)
+            {
                 if (get_attr(line, "ref", val, sizeof(val)))
                     cur_way.node_ids.push_back(std::atoll(val));
-
-            } else if (std::strncmp(line, "<tag", 4) == 0) {
+            }
+            else if (std::strncmp(line, "<tag", 4) == 0)
+            {
                 char k[128] = {}, v[128] = {};
                 get_attr(line, " k", k, sizeof(k));
                 get_attr(line, " v", v, sizeof(v));
 
-                if (std::strcmp(k, "highway") == 0) {
+                if (std::strcmp(k, "highway") == 0)
+                {
                     uint32_t spd = highway_speed(std::string(v));
-                    if (spd > 0) { cur_way.speed_kmh = spd; way_routable = true; }
-                } else if (std::strcmp(k, "oneway") == 0) {
+                    if (spd > 0)
+                    {
+                        cur_way.speed_kmh = spd;
+                        way_routable = true;
+                    }
+                }
+                else if (std::strcmp(k, "oneway") == 0)
+                {
                     if (std::strcmp(v, "yes") == 0 || std::strcmp(v, "-1") == 0)
                         cur_way.one_way = true;
-                } else if (std::strcmp(k, "access") == 0) {
+                }
+                else if (std::strcmp(k, "access") == 0)
+                {
                     if (std::strcmp(v, "no") == 0 || std::strcmp(v, "private") == 0)
                         way_routable = false;
                 }
-
-            } else if (std::strncmp(line, "</way>", 6) == 0 ||
-                       // self-closing <way .../> with no children (rare)
-                       (line[0] == '<' && line[1] == 'w')) {
+            }
+            else if (std::strncmp(line, "</way>", 6) == 0 ||
+                     // self-closing <way .../> with no children (rare)
+                     (line[0] == '<' && line[1] == 'w'))
+            {
                 // end of way
                 in_way = false;
                 if (way_routable && cur_way.node_ids.size() >= 2)
@@ -228,15 +258,21 @@ void OsmParser::parse(const std::string& filepath, Graph& graph,
         };
 
         size_t n;
-        while ((n = std::fread(buf.data(), 1, BUF, f)) > 0) {
+        while ((n = std::fread(buf.data(), 1, BUF, f)) > 0)
+        {
             size_t start = 0;
-            for (size_t i = 0; i < n; ++i) {
-                if (buf[i] == '\n') {
-                    if (!leftover.empty()) {
+            for (size_t i = 0; i < n; ++i)
+            {
+                if (buf[i] == '\n')
+                {
+                    if (!leftover.empty())
+                    {
                         leftover.append(buf.data() + start, i - start);
                         process_line(leftover.c_str());
                         leftover.clear();
-                    } else {
+                    }
+                    else
+                    {
                         // Temporarily null-terminate in the buffer
                         char save = buf[i];
                         buf[i] = '\0';
@@ -259,7 +295,7 @@ void OsmParser::parse(const std::string& filepath, Graph& graph,
     // Collect the set of OSM node IDs we actually need
     std::unordered_map<int64_t, Graph::NodeCoord> osm_nodes_raw;
     osm_nodes_raw.reserve(ways.size() * 4); // rough estimate
-    for (auto& w : ways)
+    for (auto &w : ways)
         for (int64_t id : w.node_ids)
             osm_nodes_raw.emplace(id, Graph::NodeCoord{});
 
@@ -267,7 +303,7 @@ void OsmParser::parse(const std::string& filepath, Graph& graph,
     // Pass 2: Fill lat/lon for referenced nodes only
     // ------------------------------------------------------------------
     {
-        FILE* f = std::fopen(filepath.c_str(), "rb");
+        FILE *f = std::fopen(filepath.c_str(), "rb");
         if (!f)
             throw std::runtime_error("Cannot open file: " + filepath);
 
@@ -276,33 +312,46 @@ void OsmParser::parse(const std::string& filepath, Graph& graph,
         std::string leftover;
         leftover.reserve(1024);
 
-        auto process_line = [&](const char* line) {
-            while (*line == ' ' || *line == '\t') ++line;
-            if (std::strncmp(line, "<node", 5) != 0) return;
+        auto process_line = [&](const char *line)
+        {
+            while (*line == ' ' || *line == '\t')
+                ++line;
+            if (std::strncmp(line, "<node", 5) != 0)
+                return;
 
             char id_s[32], lat_s[32], lon_s[32];
-            if (!get_attr(line, " id", id_s, sizeof(id_s))) return;
+            if (!get_attr(line, " id", id_s, sizeof(id_s)))
+                return;
             int64_t id = std::atoll(id_s);
 
             auto it = osm_nodes_raw.find(id);
-            if (it == osm_nodes_raw.end()) return;
+            if (it == osm_nodes_raw.end())
+                return;
 
-            if (!get_attr(line, " lat", lat_s, sizeof(lat_s))) return;
-            if (!get_attr(line, " lon", lon_s, sizeof(lon_s))) return;
+            if (!get_attr(line, " lat", lat_s, sizeof(lat_s)))
+                return;
+            if (!get_attr(line, " lon", lon_s, sizeof(lon_s)))
+                return;
             it->second.lat = std::atof(lat_s);
             it->second.lon = std::atof(lon_s);
         };
 
         size_t n;
-        while ((n = std::fread(buf.data(), 1, BUF, f)) > 0) {
+        while ((n = std::fread(buf.data(), 1, BUF, f)) > 0)
+        {
             size_t start = 0;
-            for (size_t i = 0; i < n; ++i) {
-                if (buf[i] == '\n') {
-                    if (!leftover.empty()) {
+            for (size_t i = 0; i < n; ++i)
+            {
+                if (buf[i] == '\n')
+                {
+                    if (!leftover.empty())
+                    {
                         leftover.append(buf.data() + start, i - start);
                         process_line(leftover.c_str());
                         leftover.clear();
-                    } else {
+                    }
+                    else
+                    {
                         char save = buf[i];
                         buf[i] = '\0';
                         process_line(buf.data() + start);
@@ -324,37 +373,44 @@ void OsmParser::parse(const std::string& filepath, Graph& graph,
     // Build dense ID mapping
     // ------------------------------------------------------------------
     uint32_t dense_id = 0;
-    for (auto& [osm_id, coord] : osm_nodes_raw)
+    for (auto &[osm_id, coord] : osm_nodes_raw)
         node_map_[osm_id] = dense_id++;
 
     uint32_t N = dense_id;
     uint32_t E_estimate = 0;
-    for (auto& w : ways) E_estimate += static_cast<uint32_t>(w.node_ids.size() - 1) * (w.one_way ? 1 : 2);
+    for (auto &w : ways)
+        E_estimate += static_cast<uint32_t>(w.node_ids.size() - 1) * (w.one_way ? 1 : 2);
 
     graph.reserve(N, E_estimate);
     graph.coords.resize(N);
-    for (auto& [osm_id, coord] : osm_nodes_raw)
+    for (auto &[osm_id, coord] : osm_nodes_raw)
         graph.coords[node_map_[osm_id]] = coord;
 
     // ------------------------------------------------------------------
     // Pass 3: Insert edges
     // ------------------------------------------------------------------
-    for (auto& w : ways) {
-        for (size_t i = 0; i + 1 < w.node_ids.size(); ++i) {
+    for (auto &w : ways)
+    {
+        for (size_t i = 0; i + 1 < w.node_ids.size(); ++i)
+        {
             auto it_u = node_map_.find(w.node_ids[i]);
             auto it_v = node_map_.find(w.node_ids[i + 1]);
-            if (it_u == node_map_.end() || it_v == node_map_.end()) continue;
+            if (it_u == node_map_.end() || it_v == node_map_.end())
+                continue;
 
             uint32_t u = it_u->second, v = it_v->second;
-            auto& cu = graph.coords[u];
-            auto& cv = graph.coords[v];
+            auto &cu = graph.coords[u];
+            auto &cv = graph.coords[v];
             uint32_t dist_mm = haversine_mm(cu.lat, cu.lon, cv.lat, cv.lon);
 
             uint32_t weight;
-            if (weight_mode == "time") {
+            if (weight_mode == "time")
+            {
                 weight = static_cast<uint32_t>(
                     static_cast<uint64_t>(dist_mm) * 3600 / (w.speed_kmh * 1000));
-            } else {
+            }
+            else
+            {
                 weight = dist_mm;
             }
 
