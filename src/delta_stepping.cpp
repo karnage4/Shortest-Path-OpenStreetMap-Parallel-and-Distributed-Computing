@@ -23,7 +23,7 @@ DeltaSteppingResult delta_stepping(const Graph& g, uint32_t source,
     dist[source].store(0, std::memory_order_relaxed);
 
     std::vector<uint32_t> prev(N, NO_NODE);
-    const uint32_t NB = 1024;
+    const uint32_t NB = 2048;
     std::vector<std::vector<uint32_t>> buckets(NB);
     std::vector<std::mutex> blk(NB);
     buckets[0].push_back(source);
@@ -32,14 +32,28 @@ DeltaSteppingResult delta_stepping(const Graph& g, uint32_t source,
 
     uint32_t cb = 0;
     while (true) {
+        // Find next non-empty bucket
         while (cb < NB && buckets[cb % NB].empty()) ++cb;
         if (cb >= NB) break;
         uint32_t b = cb % NB;
 
-        // Phase 1: light edges
+        // Track which nodes were settled in this bucket for heavy edge phase
+        std::vector<uint32_t> settled;
+
+        // Phase 1: light edges — repeat until bucket stable
         while (!buckets[b].empty()) {
             std::vector<uint32_t> nodes;
-            { std::lock_guard<std::mutex> lk(blk[b]); nodes.swap(buckets[b]); }
+            {
+                std::lock_guard<std::mutex> lk(blk[b]);
+                nodes.swap(buckets[b]);
+            }
+
+            // Add to settled list
+            for (uint32_t u : nodes) {
+                uint32_t du = dist[u].load(std::memory_order_relaxed);
+                if (du != INF_DIST && du / delta == cb)
+                    settled.push_back(u);
+            }
 
             #pragma omp parallel for schedule(dynamic, 64)
             for (int i = 0; i < (int)nodes.size(); ++i) {
@@ -59,17 +73,16 @@ DeltaSteppingResult delta_stepping(const Graph& g, uint32_t source,
             }
         }
 
-        // Phase 2: heavy edges
-        std::vector<uint32_t> hs;
-        for (uint32_t v = 0; v < N; ++v) {
-            uint32_t dv = dist[v].load(std::memory_order_relaxed);
-            if (dv != INF_DIST && dv / delta == cb) hs.push_back(v);
-        }
+        // Remove duplicates from settled
+        std::sort(settled.begin(), settled.end());
+        settled.erase(std::unique(settled.begin(), settled.end()), settled.end());
 
+        // Phase 2: heavy edges — only on settled nodes (NOT scanning all N)
         #pragma omp parallel for schedule(dynamic, 64)
-        for (int i = 0; i < (int)hs.size(); ++i) {
-            uint32_t u = hs[i];
+        for (int i = 0; i < (int)settled.size(); ++i) {
+            uint32_t u = settled[i];
             uint32_t du = dist[u].load(std::memory_order_acquire);
+            if (du == INF_DIST) continue;
             for (const Edge* e = g.edge_begin(u); e != g.edge_end(u); ++e) {
                 if (e->weight <= delta) continue;
                 uint32_t nd = du + e->weight;
@@ -81,6 +94,7 @@ DeltaSteppingResult delta_stepping(const Graph& g, uint32_t source,
                 }
             }
         }
+
         ++cb;
     }
 
