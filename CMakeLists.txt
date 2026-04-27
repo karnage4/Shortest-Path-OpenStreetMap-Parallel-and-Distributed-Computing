@@ -28,3 +28,16 @@ add_executable(osm_parallel
     src/parallel_dijkstra.cpp)
 target_include_directories(osm_parallel PRIVATE src)
 target_link_libraries(osm_parallel PRIVATE OpenMP::OpenMP_CXX)
+
+# ── Milestone 3: Multi-query batch processing ──────────────────
+add_executable(osm_m3
+    src/milestone3_main.cpp
+    src/osm_parser.cpp
+    src/dijkstra.cpp
+    src/graph.cpp
+    src/batch_query.cpp
+    src/landmark_preprocess.cpp
+    src/bidirectional_dijkstra.cpp
+)
+target_include_directories(osm_m3 PRIVATE src)
+# target_link_libraries(osm_m3 PRIVATE pugixml::pugixml)
