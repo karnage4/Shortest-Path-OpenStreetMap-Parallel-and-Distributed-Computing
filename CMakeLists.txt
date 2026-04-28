@@ -40,4 +40,16 @@ add_executable(osm_m3
     src/bidirectional_dijkstra.cpp
 )
 target_include_directories(osm_m3 PRIVATE src)
-# target_link_libraries(osm_m3 PRIVATE pugixml::pugixml)
+# ── GUI Backend ──────────────────
+add_executable(gui_backend
+    src/gui_backend.cpp
+    src/osm_parser.cpp
+    src/dijkstra.cpp
+    src/graph.cpp
+    src/delta_stepping.cpp
+    src/bidirectional_dijkstra.cpp
+    src/parallel_dijkstra.cpp
+    src/landmark_preprocess.cpp
+)
+target_include_directories(gui_backend PRIVATE src)
+target_link_libraries(gui_backend PRIVATE OpenMP::OpenMP_CXX)
