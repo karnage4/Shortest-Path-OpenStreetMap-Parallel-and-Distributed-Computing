@@ -4,10 +4,6 @@ import subprocess
 import threading
 import os
 import csv
-import matplotlib.pyplot as plt
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from matplotlib.animation import FuncAnimation
-import numpy as np
 
 class RoutingGUI:
     def __init__(self, root):
@@ -44,9 +40,6 @@ class RoutingGUI:
         self.create_widgets()
         
         self.process = None
-        self.path_coords = []
-        self.animation = None
-        self.comparison_data = {}
 
     def setup_styles(self):
         style = ttk.Style()
@@ -86,9 +79,17 @@ class RoutingGUI:
         ttk.Label(cfg, text="HYPERPARAMETERS", style="SubHeader.TLabel").pack(anchor="w", pady=(20, 5))
         p_frame = ttk.Frame(cfg, style="Sidebar.TFrame")
         p_frame.pack(fill="x")
-        ttk.Label(p_frame, text="Threads:", style="Sidebar.TLabel").grid(row=0, column=0, sticky="w")
+        ttk.Label(p_frame, text="Threads:", style="Sidebar.TLabel").grid(row=0, column=0, sticky="w", pady=2)
         self.threads_var = tk.IntVar(value=4)
-        tk.Scale(p_frame, from_=1, to=16, orient="horizontal", variable=self.threads_var, bg=self.sidebar_bg, fg="#000000", highlightthickness=0).grid(row=0, column=1, sticky="ew", padx=10)
+        tk.Scale(p_frame, from_=1, to=16, orient="horizontal", variable=self.threads_var, bg=self.sidebar_bg, fg="#000000", highlightthickness=0).grid(row=0, column=1, sticky="ew", padx=10, pady=2)
+
+        ttk.Label(p_frame, text="Delta (Δ):", style="Sidebar.TLabel").grid(row=1, column=0, sticky="w", pady=2)
+        self.delta_var = tk.StringVar(value="150")
+        ttk.Entry(p_frame, textvariable=self.delta_var, width=10).grid(row=1, column=1, sticky="w", padx=10, pady=2)
+
+        ttk.Label(p_frame, text="Chunk/Landmarks:", style="Sidebar.TLabel").grid(row=2, column=0, sticky="w", pady=2)
+        self.chunk_var = tk.StringVar(value="16")
+        ttk.Entry(p_frame, textvariable=self.chunk_var, width=10).grid(row=2, column=1, sticky="w", padx=10, pady=2)
 
         # Task Tabs
         ttk.Label(cfg, text="ROUTING ENGINE TASKS", style="SubHeader.TLabel").pack(anchor="w", pady=(20, 5))
@@ -125,7 +126,7 @@ class RoutingGUI:
         self.task_tabs.add(bm_f, text="Performance")
         ttk.Label(bm_f, text="Experiment:", style="Sidebar.TLabel").pack(anchor="w", pady=(10, 0))
         self.bench_var = tk.StringVar(value="Algorithm Comparison")
-        ttk.Combobox(bm_f, textvariable=self.bench_var, values=["Algorithm Comparison", "Thread Scaling Analysis"], state="readonly").pack(fill="x", pady=5)
+        ttk.Combobox(bm_f, textvariable=self.bench_var, values=["Algorithm Comparison", "Thread Scaling Analysis", "Milestone 3 Running (N queries)"], state="readonly").pack(fill="x", pady=5)
         ttk.Label(bm_f, text="Query Count:", style="Sidebar.TLabel").pack(anchor="w")
         self.queries_var = tk.StringVar(value="100")
         ttk.Entry(bm_f, textvariable=self.queries_var).pack(fill="x", pady=5)
@@ -139,23 +140,10 @@ class RoutingGUI:
         # Workspace
         main = ttk.Frame(self.root)
         main.pack(side="right", fill="both", expand=True, padx=30, pady=30)
-        self.main_tabs = ttk.Notebook(main)
-        self.main_tabs.pack(fill="both", expand=True)
-
-        self.map_tab = ttk.Frame(self.main_tabs)
-        self.main_tabs.add(self.map_tab, text="TRAVERSAL VISUALIZER")
-        self.map_fig, self.map_ax = plt.subplots(figsize=(8, 8), facecolor='#ffffff')
-        self.map_canvas = FigureCanvasTkAgg(self.map_fig, master=self.map_tab)
-        self.map_canvas.get_tk_widget().pack(fill="both", expand=True)
-
-        self.stats_tab = ttk.Frame(self.main_tabs)
-        self.main_tabs.add(self.stats_tab, text="PERFORMANCE ANALYTICS")
-        self.stats_fig, self.stats_axs = plt.subplots(2, 2, figsize=(12, 10), facecolor='#ffffff')
-        self.stats_canvas = FigureCanvasTkAgg(self.stats_fig, master=self.stats_tab)
-        self.stats_canvas.get_tk_widget().pack(fill="both", expand=True)
-
-        self.log_tab = ttk.Frame(self.main_tabs)
-        self.main_tabs.add(self.log_tab, text="SYSTEM TERMINAL")
+        
+        self.log_tab = ttk.Frame(main)
+        self.log_tab.pack(fill="both", expand=True)
+        ttk.Label(self.log_tab, text="SYSTEM TERMINAL", style="Header.TLabel").pack(pady=(0, 10), anchor="w")
         self.console = scrolledtext.ScrolledText(self.log_tab, bg="#ffffff", fg="#000000", font=("Consolas", 10), borderwidth=1, relief="solid")
         self.console.pack(fill="both", expand=True)
 
@@ -181,7 +169,6 @@ class RoutingGUI:
         self.run_btn.config(state="disabled")
         self.stop_btn.config(state="normal")
         self.console.delete(1.0, tk.END)
-        self.comparison_data = {}
         
         active_tab = self.task_tabs.index("current")
         if active_tab == 0 and self.run_all_var.get():
@@ -195,33 +182,44 @@ class RoutingGUI:
         src = self.src_combo.get()
         tgt = self.tgt_combo.get()
         threads = str(self.threads_var.get())
+        delta = self.delta_var.get()
+        chunk = self.chunk_var.get()
+        
+        exe_ext = ".exe" if os.name == "nt" else ""
         
         if self.task_tabs.index("current") == 0:
-            cmd = [os.path.join("build", "gui_backend.exe"), m_path, algo, src, tgt, threads, "150", "16"]
+            cmd = [os.path.join("build", f"gui_backend{exe_ext}"), m_path, algo, src, tgt, threads, delta, chunk]
         else:
             if "Comparison" in self.bench_var.get():
-                cmd = [os.path.join("build", "osm_parallel.exe"), m_path, threads, "150", self.queries_var.get()]
+                cmd = [os.path.join("build", f"osm_parallel{exe_ext}"), m_path, threads, delta, self.queries_var.get()]
             else:
-                cmd = [os.path.join("build", "osm_m3.exe"), m_path, self.queries_var.get(), "16"]
+                cmd = [os.path.join("build", f"osm_m3{exe_ext}"), m_path, self.queries_var.get(), chunk]
 
         self.log(f"ENGINE> Running {algo} on {self.map_var.get()}...")
         try:
             self.process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, universal_newlines=True, encoding='utf-8', errors='replace')
-            c_mode = False
-            self.path_coords = []
             res_time = 0
+            c_mode = False
             for line in self.process.stdout:
-                txt = line.strip()
-                if "PATH_COORDS_START" in txt: c_mode = True; continue
-                if "PATH_COORDS_END" in txt: c_mode = False; continue
+                clean_line = line.rstrip('\r\n')
+                if "PATH_COORDS_START" in clean_line: 
+                    c_mode = True
+                    continue
+                if "PATH_COORDS_END" in clean_line:
+                    c_mode = False
+                    continue
                 if c_mode:
-                    try: self.path_coords.append(list(map(float, txt.split(","))))
-                    except: pass
-                else:
-                    if "RESULT_TIME:" in txt: res_time = float(txt.split(":")[1].strip().split()[0])
-                    self.root.after(0, self.log, txt)
+                    continue
+                
+                if "RESULT_TIME:" in clean_line:
+                    try:
+                        res_time = float(clean_line.split("RESULT_TIME:")[1].strip().split()[0])
+                    except:
+                        pass
+                self.root.after(0, self.log, clean_line)
             self.process.wait()
             if algo_override: return res_time
+            
             self.root.after(0, self.on_task_done)
         except Exception as e:
             self.log(f"ERROR: {e}")
@@ -230,88 +228,16 @@ class RoutingGUI:
     def run_comparison_suite(self):
         algos = ["dijkstra", "bidirectional", "delta_stepping", "parallel_dijkstra", "landmark_astar"]
         for a in algos:
-            t = self.run_single_task(a)
-            self.comparison_data[a] = t
+            self.run_single_task(a)
         self.root.after(0, self.on_task_done)
 
     def on_task_done(self):
         self.run_btn.config(state="normal")
         self.stop_btn.config(state="disabled")
         self.log("-" * 60 + "\nTASK COMPLETE.")
-        self.draw_all()
 
     def stop_task(self):
         if self.process: self.process.terminate()
-
-    def draw_all(self):
-        self.draw_map()
-        self.draw_graphs()
-
-    def draw_map(self):
-        self.map_ax.clear()
-        if self.path_coords:
-            lats, lons = zip(*self.path_coords)
-            self.map_ax.plot(lons, lats, color=self.accent_color, lw=3, label="Path", zorder=5)
-            self.map_ax.scatter(lons[0], lats[0], color='green', s=120, label='Start', zorder=10)
-            self.map_ax.scatter(lons[-1], lats[-1], color='red', s=120, label='End', zorder=10)
-            self.map_ax.set_title(f"Routing Traversal: {self.map_var.get()}")
-            self.map_ax.legend()
-            self.main_tabs.select(0)
-            self.animate()
-        self.map_canvas.draw()
-
-    def animate(self):
-        if self.animation and hasattr(self.animation, 'event_source') and self.animation.event_source:
-            self.animation.event_source.stop()
-        lats, lons = zip(*self.path_coords)
-        line, = self.map_ax.plot([], [], color=self.accent_color, lw=4)
-        def update(i):
-            line.set_data(lons[:i], lats[:i])
-            return line,
-        self.animation = FuncAnimation(self.map_fig, update, frames=len(self.path_coords)+1, interval=20, blit=True, repeat=False)
-
-    def draw_graphs(self):
-        for ax in self.stats_axs.flat: ax.clear()
-        
-        # 1. Latency Bar Chart
-        ax1 = self.stats_axs[0, 0]
-        if self.comparison_data:
-            names = list(self.comparison_data.keys())
-            times = list(self.comparison_data.values())
-            ax1.bar(names, times, color=self.accent_color)
-            ax1.set_title("Algorithm Latency Comparison (ms)")
-            ax1.set_ylabel("Execution Time (ms)")
-            plt.setp(ax1.get_xticklabels(), rotation=15, ha='right')
-
-        # 2. Speedup Graph
-        ax2 = self.stats_axs[0, 1]
-        if self.comparison_data:
-            t0 = self.comparison_data.get("dijkstra", 1)
-            if t0 == 0: t0 = 1
-            speedups = [t0 / t if t > 0 else 1 for t in self.comparison_data.values()]
-            ax2.plot(list(self.comparison_data.keys()), speedups, 'o-', color='orange', lw=2)
-            ax2.set_title("Relative Speedup Factor")
-            ax2.set_ylabel("Speedup (x)")
-            plt.setp(ax2.get_xticklabels(), rotation=15, ha='right')
-
-        # 3. Scaling Graph
-        ax3 = self.stats_axs[1, 0]
-        if os.path.exists("milestone3_results.csv"):
-            threads, qps = [], []
-            with open("milestone3_results.csv", 'r') as f:
-                reader = csv.DictReader(f)
-                for r in reader:
-                    threads.append(int(r['threads']))
-                    qps.append(float(r['throughput_qps']))
-            if threads:
-                ax3.plot(threads, qps, 's-', color='green', lw=2)
-                ax3.set_title("System Throughput Scaling (QPS)")
-                ax3.set_xlabel("CPU Threads")
-                ax3.set_ylabel("QPS")
-
-        self.stats_fig.tight_layout()
-        self.stats_canvas.draw()
-        if not self.path_coords and self.comparison_data: self.main_tabs.select(1)
 
 if __name__ == "__main__":
     root = tk.Tk()

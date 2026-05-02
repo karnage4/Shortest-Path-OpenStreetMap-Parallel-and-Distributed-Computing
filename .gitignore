@@ -3,3 +3,5 @@ build/
 *.exe
 *.out
 data/
+
+Reports_M3/
