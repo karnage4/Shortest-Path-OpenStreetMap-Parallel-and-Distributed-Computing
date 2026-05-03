@@ -4,6 +4,10 @@ import subprocess
 import threading
 import os
 import csv
+import sys
+
+# Ensure we are in the project root directory regardless of how the script is launched
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 class RoutingGUI:
     def __init__(self, root):
