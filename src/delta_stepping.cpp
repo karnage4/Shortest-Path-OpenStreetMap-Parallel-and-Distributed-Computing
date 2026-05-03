@@ -40,7 +40,7 @@ DeltaSteppingResult delta_stepping(const Graph& g, uint32_t source,
         // Track which nodes were settled in this bucket for heavy edge phase
         std::vector<uint32_t> settled;
 
-        // Phase 1: light edges — repeat until bucket stable
+        // Phase 1: light edges - repeat until bucket stable
         while (!buckets[b].empty()) {
             std::vector<uint32_t> nodes;
             {
@@ -77,7 +77,7 @@ DeltaSteppingResult delta_stepping(const Graph& g, uint32_t source,
         std::sort(settled.begin(), settled.end());
         settled.erase(std::unique(settled.begin(), settled.end()), settled.end());
 
-        // Phase 2: heavy edges — only on settled nodes (NOT scanning all N)
+        // Phase 2: heavy edges - only on settled nodes (NOT scanning all N)
         #pragma omp parallel for schedule(dynamic, 64)
         for (int i = 0; i < (int)settled.size(); ++i) {
             uint32_t u = settled[i];

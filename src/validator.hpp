@@ -9,15 +9,15 @@
 // Correctness Validator for Milestone 1
 //
 // Two checks:
-//  1. TRIANGLE INEQUALITY — for three random nodes A, B, C:
+//  1. TRIANGLE INEQUALITY - for three random nodes A, B, C:
 //     dist(A,C) <= dist(A,B) + dist(B,C) must always hold.
 //     If Dijkstra is correct this is always true.
 //
-//  2. HAVERSINE LOWER BOUND — Dijkstra road distance >= straight-line
+//  2. HAVERSINE LOWER BOUND - Dijkstra road distance >= straight-line
 //     (Haversine) distance between same two nodes. Roads can't be shorter
 //     than a straight line, so any violation = bug.
 //
-//  3. SYMMETRY CHECK — for two-way roads: dist(A→B) should equal dist(B→A).
+//  3. SYMMETRY CHECK - for two-way roads: dist(A→B) should equal dist(B→A).
 //     Violations indicate a one-way parsing bug.
 // ---------------------------------------------------------------------------
 
@@ -121,10 +121,10 @@ inline void run(const Graph& g, uint32_t num_tests = 5) {
             continue;
         }
 
-        // 1% tolerance — one-way roads can legitimately differ
+        // 1% tolerance - one-way roads can legitimately differ
         double ratio = static_cast<double>(resA.dist[B]) /
                        static_cast<double>(resB.dist[A]);
-        bool ok = (ratio > 0.5 && ratio < 2.0); // loose check — flags big asymmetry only
+        bool ok = (ratio > 0.5 && ratio < 2.0); // loose check - flags big asymmetry only
 
         std::cout << "  dist(" << A << "->" << B << ")=" << resA.dist[B]
                   << "  dist(" << B << "->" << A << ")=" << resB.dist[A]
@@ -138,9 +138,9 @@ inline void run(const Graph& g, uint32_t num_tests = 5) {
     std::cout << "\n--------------------------------------------\n";
     std::cout << "Results: " << passed << " PASSED  |  " << failed << " FAILED\n";
     if (failed == 0)
-        std::cout << "STATUS: ALL CHECKS PASSED — Dijkstra is correct\n";
+        std::cout << "STATUS: ALL CHECKS PASSED - Dijkstra is correct\n";
     else
-        std::cout << "STATUS: FAILURES DETECTED — check parsing logic\n";
+        std::cout << "STATUS: FAILURES DETECTED - check parsing logic\n";
     std::cout << "============================================\n\n";
 }
 

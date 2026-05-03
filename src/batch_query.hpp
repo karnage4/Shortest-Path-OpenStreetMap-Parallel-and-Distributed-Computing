@@ -58,10 +58,10 @@ struct BatchStats
 // BatchQueryProcessor
 //
 // DESIGN:
-//   - Graph is shared read-only across ALL threads — zero graph locks
+//   - Graph is shared read-only across ALL threads - zero graph locks
 //   - Thread pool processes queries from a shared work queue
 //   - Only the work queue needs a mutex (one lock per query dispatch)
-//   - Each thread owns its own DijkstraResult (dist[], prev[]) — no sharing
+//   - Each thread owns its own DijkstraResult (dist[], prev[]) - no sharing
 //
 // This achieves near-linear throughput scaling because:
 //   - Critical section = popping one query from queue (~nanoseconds)
@@ -79,7 +79,7 @@ public:
     process(const std::vector<Query> &queries, uint32_t num_threads);
 
 private:
-    const Graph &graph_; // read-only — no locks needed
+    const Graph &graph_; // read-only - no locks needed
 };
 
 // ---------------------------------------------------------------------------

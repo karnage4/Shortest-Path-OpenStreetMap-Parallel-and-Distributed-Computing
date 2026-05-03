@@ -80,7 +80,7 @@ int main(int argc, char* argv[]) {
 
     // Results table
     std::cout << "\n============================================================\n";
-    std::cout << "  MILESTONE 2 — PARALLEL BENCHMARK\n";
+    std::cout << "  MILESTONE 2 - PARALLEL BENCHMARK\n";
     std::cout << "  Queries: " << num_queries << "  |  Threads: " << num_threads
               << "  |  Delta: " << delta_m << " m\n";
     std::cout << "============================================================\n";

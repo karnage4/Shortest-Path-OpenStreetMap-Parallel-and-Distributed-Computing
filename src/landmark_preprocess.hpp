@@ -5,7 +5,7 @@
 #include <string>
 
 // ---------------------------------------------------------------------------
-// Landmark Preprocessing — ALT Algorithm
+// Landmark Preprocessing - ALT Algorithm
 // (A* with Landmarks and Triangle inequality)
 //
 // HOW IT WORKS:
@@ -26,7 +26,7 @@
 //   Preprocessing cost: K × 2 × Dijkstra (paid once, amortized over queries).
 //
 // PDC ANGLE:
-//   K landmark Dijkstras run in PARALLEL — perfect task parallelism.
+//   K landmark Dijkstras run in PARALLEL - perfect task parallelism.
 //   Preprocessing time is amortized over many queries.
 // ---------------------------------------------------------------------------
 

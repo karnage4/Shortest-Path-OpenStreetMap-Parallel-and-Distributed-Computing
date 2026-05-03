@@ -71,25 +71,25 @@ BatchQueryProcessor::process(const std::vector<Query> &queries,
     const uint32_t N = static_cast<uint32_t>(queries.size());
     std::vector<QueryResult> results(N);
 
-    // Shared work queue — only one mutex for the entire batch
+    // Shared work queue - only one mutex for the entire batch
     // Lock held for nanoseconds (just pop index), work done lock-free
-    std::atomic<uint32_t> next_query{0}; // atomic counter — no mutex needed!
+    std::atomic<uint32_t> next_query{0}; // atomic counter - no mutex needed!
 
     auto t_batch_start = std::chrono::steady_clock::now();
 
-    // Worker lambda — each thread loops pulling queries atomically
+    // Worker lambda - each thread loops pulling queries atomically
     auto worker = [&]()
     {
         while (true)
         {
-            // Atomically grab the next query index — lock-free!
+            // Atomically grab the next query index - lock-free!
             uint32_t idx = next_query.fetch_add(1, std::memory_order_relaxed);
             if (idx >= N)
                 break; // no more work
 
             const Query &q = queries[idx];
 
-            // Each thread runs its own Dijkstra — no shared mutable state
+            // Each thread runs its own Dijkstra - no shared mutable state
             // graph_ is read-only → zero synchronization on graph access
             auto t_start = std::chrono::steady_clock::now();
             auto res = dijkstra(graph_, q.source);

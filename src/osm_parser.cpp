@@ -9,7 +9,7 @@
 
 // ---------------------------------------------------------------------------
 // Haversine formula. Returns distance in millimetres (uint32_t).
-// Max OSM edge ~200 km → 200,000,000 mm — well within uint32_t (4,294,967,295).
+// Max OSM edge ~200 km → 200,000,000 mm - well within uint32_t (4,294,967,295).
 // ---------------------------------------------------------------------------
 uint32_t OsmParser::haversine_mm(double lat1, double lon1,
                                   double lat2, double lon2) {
@@ -39,25 +39,25 @@ uint32_t highway_speed(const std::string& tag) {
 // but our graph-build logic needs to know which nodes are referenced by ways
 // before we can assign dense IDs. We therefore do two passes over the file:
 //
-//   Pass 1 — scan only <way> elements:
+//   Pass 1 - scan only <way> elements:
 //             • determine routable ways (highway tag with nonzero speed)
 //             • collect the set of OSM node IDs referenced by those ways
 //             • store WayInfo (node id list, oneway flag, speed) for pass 3
 //
-//   Pass 2 — scan only <node> elements:
+//   Pass 2 - scan only <node> elements:
 //             • look up each node ID in the referenced-set from pass 1
 //             • store lat/lon for matched nodes, assign dense [0,N) IDs
 //
-//   Build — iterate stored ways, compute edge weights, populate CSR graph.
+//   Build - iterate stored ways, compute edge weights, populate CSR graph.
 //
-// Memory usage: O(N_road_nodes + E_road_edges) — never the full XML DOM.
+// Memory usage: O(N_road_nodes + E_road_edges) - never the full XML DOM.
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Helper: a tiny SAX handler wrapping pugi::xml_reader.
 // pugixml's xml_reader fires callbacks for each element start/end/attribute.
 // We subclass xml_reader_writer (the interface is xml_reader) and override
-// for_each_node().  The cleaner public interface is pugi::xml_reader — we use
+// for_each_node().  The cleaner public interface is pugi::xml_reader - we use
 // the callback-style traversal via the pugi SAX event reader.
 // ---------------------------------------------------------------------------
 
@@ -86,7 +86,7 @@ uint32_t highway_speed(const std::string& tag) {
 // Open the file as a binary stream and use pugixml to parse one top-level
 // element at a time by feeding it chunks. Since this is complex to implement
 // correctly, we instead use the simpler approach of loading the document in
-// "streaming" partial mode — pugixml does NOT natively support true streaming
+// "streaming" partial mode - pugixml does NOT natively support true streaming
 // for arbitrary XML, but for OSM files we can exploit the flat structure:
 // all <node> and <way> elements are direct children of <osm>.
 //
@@ -111,7 +111,7 @@ uint32_t highway_speed(const std::string& tag) {
 //
 // We exploit this by reading line-by-line (OSM exporters always put one
 // element per line, or at most a few lines per element). We scan for the
-// relevant XML start-tags with simple string operations — no full XML parser
+// relevant XML start-tags with simple string operations - no full XML parser
 // needed for this well-known schema.
 // ---------------------------------------------------------------------------
 

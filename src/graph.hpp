@@ -6,7 +6,7 @@
 #include <limits>
 
 // ---------------------------------------------------------------------------
-// Edge weight: stored as uint32_t (millimetres). Max ~4295 km per edge — fine
+// Edge weight: stored as uint32_t (millimetres). Max ~4295 km per edge - fine
 // for OSM road segments. Keeps the struct at 8 bytes → two fit in a cache line.
 // ---------------------------------------------------------------------------
 struct Edge {
@@ -18,11 +18,11 @@ struct Edge {
 // CSR (Compressed Sparse Row) adjacency list.
 //
 // Memory layout (illustrative, 4-node graph):
-//   head_:  [0, 2, 5, 5, 7]   — head_[u]..head_[u+1] is the edge range for u
+//   head_:  [0, 2, 5, 5, 7]   - head_[u]..head_[u+1] is the edge range for u
 //   edges_: [e0, e1, e2, e3, e4, e5, e6]
 //
 // This stores all edges contiguously. Iterating neighbours of node u only
-// touches head_[u], head_[u+1], and edges_[head_[u]..head_[u+1]-1] — a tight,
+// touches head_[u], head_[u+1], and edges_[head_[u]..head_[u+1]-1] - a tight,
 // predictable memory region that the hardware prefetcher loves.
 // ---------------------------------------------------------------------------
 class Graph {

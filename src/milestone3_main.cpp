@@ -51,21 +51,21 @@ int main(int argc, char *argv[])
         << "avg_ms,min_ms,p95_ms,max_ms,total_ms\n";
 
     std::string label = std::string(argv[1]);
-    // Trim path — keep filename only
+    // Trim path - keep filename only
     auto slash = label.find_last_of("/\\");
     if (slash != std::string::npos)
         label = label.substr(slash + 1);
 
     // ── Experiment 1: Thread scaling (plain Dijkstra batch) ───────────────
-    std::cout << "\n╔══════════════════════════════════════════════╗\n";
-    std::cout << "║  EXPERIMENT 1: Thread Scaling (Batch Dijkstra)║\n";
-    std::cout << "╚══════════════════════════════════════════════╝\n";
+    std::cout << "\n==============================================\n";
+    std::cout << "  EXPERIMENT 1: Thread Scaling (Batch Dijkstra)\n";
+    std::cout << "==============================================\n";
     run_scaling_experiment(g, queries, label, csv);
 
     // ── Experiment 2: Landmark preprocessing ─────────────────────────────
-    std::cout << "\n╔══════════════════════════════════════════════╗\n";
-    std::cout << "║  EXPERIMENT 2: Landmark A* Preprocessing      ║\n";
-    std::cout << "╚══════════════════════════════════════════════╝\n";
+    std::cout << "\n==============================================\n";
+    std::cout << "  EXPERIMENT 2: Landmark A* Preprocessing\n";
+    std::cout << "==============================================\n";
 
     LandmarkIndex landmark_idx;
     {
@@ -100,9 +100,9 @@ int main(int argc, char *argv[])
     std::cout << std::string(62, '-') << "\n";
 
     // ── Experiment 3: Latency distribution analysis ───────────────────────
-    std::cout << "\n╔══════════════════════════════════════════════╗\n";
-    std::cout << "║  EXPERIMENT 3: Latency Distribution           ║\n";
-    std::cout << "╚══════════════════════════════════════════════╝\n";
+    std::cout << "\n==============================================\n";
+    std::cout << "  EXPERIMENT 3: Latency Distribution\n";
+    std::cout << "==============================================\n";
 
     auto [res_full, stats_full] = batch_proc.process(queries, 4);
 
@@ -125,9 +125,9 @@ int main(int argc, char *argv[])
                      std::to_string(num_queries) + " queries)");
 
     // ── Experiment 4: Amortization analysis ──────────────────────────────
-    std::cout << "\n╔══════════════════════════════════════════════╗\n";
-    std::cout << "║  EXPERIMENT 4: Preprocessing Amortization     ║\n";
-    std::cout << "╚══════════════════════════════════════════════╝\n";
+    std::cout << "\n==============================================\n";
+    std::cout << "  EXPERIMENT 4: Preprocessing Amortization\n";
+    std::cout << "==============================================\n";
 
     double build_ms = landmark_idx.build_time_ms();
     auto stats_lm = run_landmark_batch(g, landmark_idx, queries, 4);
