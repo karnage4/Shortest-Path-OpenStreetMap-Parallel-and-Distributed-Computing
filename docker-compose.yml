@@ -1,0 +1,77 @@
+version: "3.9"
+
+# ─────────────────────────────────────────────────────────────────
+# Build once, run any binary.
+#
+# Usage examples:
+#
+#   Interactive shell (default):
+#     docker compose run --rm osm-shell
+#
+#   Single sequential query:
+#     docker compose run --rm osm-routing monaco.osm 249952272 249952273
+#
+#   Parallel benchmark:
+#     docker compose run --rm osm-parallel monaco.osm 8 150 50
+#
+#   Sequential benchmark:
+#     docker compose run --rm osm-bench monaco.osm 50
+#
+#   Milestone-3 multi-query batch:
+#     docker compose run --rm osm-m3 monaco.osm
+# ─────────────────────────────────────────────────────────────────
+
+x-base: &base
+  build:
+    context: .
+    dockerfile: Dockerfile
+    target: runtime
+  image: osm-pdc:latest
+  volumes:
+    # Mount the local data/ directory so containers can read .osm files
+    - ./data:/app/data:ro
+  working_dir: /app
+
+services:
+  # ── Drop into an interactive shell ──────────────────────────────
+  osm-shell:
+    <<: *base
+    container_name: osm_shell
+    stdin_open: true
+    tty: true
+    command: ["/bin/bash"]
+
+  # ── Sequential single-query / general routing ───────────────────
+  # docker compose run --rm osm-routing <osm_file> <src_id> <dst_id>
+  osm-routing:
+    <<: *base
+    container_name: osm_routing
+    entrypoint: ["osm_routing"]
+    command: ["/app/data/monaco.osm"]   # override on the CLI
+
+  # ── Sequential benchmark ─────────────────────────────────────────
+  # docker compose run --rm osm-bench <osm_file> [queries]
+  osm-bench:
+    <<: *base
+    container_name: osm_bench
+    entrypoint: ["osm_bench"]
+    command: ["/app/data/monaco.osm", "20"]
+
+  # ── Parallel benchmark (OpenMP) ──────────────────────────────────
+  # docker compose run --rm osm-parallel <osm_file> [threads] [delta] [queries]
+  osm-parallel:
+    <<: *base
+    container_name: osm_parallel
+    entrypoint: ["osm_parallel"]
+    command: ["/app/data/monaco.osm", "4", "150", "20"]
+    environment:
+      # Let OpenMP use all CPUs available to the container
+      OMP_NUM_THREADS: "${OMP_NUM_THREADS:-4}"
+
+  # ── Milestone-3 batch / landmark processing ──────────────────────
+  # docker compose run --rm osm-m3 <osm_file>
+  osm-m3:
+    <<: *base
+    container_name: osm_m3
+    entrypoint: ["osm_m3"]
+    command: ["/app/data/monaco.osm"]

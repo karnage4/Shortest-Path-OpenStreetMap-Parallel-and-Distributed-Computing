@@ -11,11 +11,13 @@ find_package(OpenMP REQUIRED)
 add_executable(osm_routing
     src/main.cpp src/osm_parser.cpp src/dijkstra.cpp src/graph.cpp)
 target_include_directories(osm_routing PRIVATE src)
+target_link_libraries(osm_routing PRIVATE OpenMP::OpenMP_CXX)
 
 add_executable(osm_bench
     src/main.cpp src/osm_parser.cpp src/dijkstra.cpp src/graph.cpp)
 target_include_directories(osm_bench PRIVATE src)
 target_compile_definitions(osm_bench PRIVATE BENCHMARK_MODE)
+target_link_libraries(osm_bench PRIVATE OpenMP::OpenMP_CXX)
 
 # Milestone 2
 add_executable(osm_parallel
@@ -40,4 +42,4 @@ add_executable(osm_m3
     src/bidirectional_dijkstra.cpp
 )
 target_include_directories(osm_m3 PRIVATE src)
-# target_link_libraries(osm_m3 PRIVATE pugixml::pugixml)
+target_link_libraries(osm_m3 PRIVATE OpenMP::OpenMP_CXX)

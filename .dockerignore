@@ -1,0 +1,22 @@
+# Git / IDE metadata
+.git
+.gitignore
+.vs
+.vscode
+
+# Build artifacts (rebuilt inside Docker)
+build/
+out/
+
+# OSM data files (large - mount at runtime via -v instead)
+data/
+
+# Reports and docs
+Reports_M3/
+*.pdf
+*.md
+
+# Windows object files
+*.o
+*.exe
+*.obj
